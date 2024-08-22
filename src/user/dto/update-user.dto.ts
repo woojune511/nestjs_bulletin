@@ -12,4 +12,12 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     password?: string;
+
+    @IsOptional()
+    @IsString()
+    currentRefreshToken: string;
+
+    @IsOptional()
+    @IsString()
+    currentRefreshTokenExp: string;
 }

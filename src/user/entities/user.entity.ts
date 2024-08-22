@@ -21,6 +21,12 @@ export class User {
     @Column()
     profile_pic: string;
 
+    @Column({ nullable: true })
+    currentRefreshToken: string;
+
+    @Column({ type: 'datetime', nullable: true })
+    currentRefreshTokenExp: Date;
+
     // @OneToMany(() => Space, (space) => space.owner)
     // own_spaces: Space[];
 }

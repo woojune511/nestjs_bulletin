@@ -4,6 +4,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "src/user/entities/user.entity";
 import { UserService } from "src/user/user.service";
 import { Repository } from "typeorm";
+import { jwtConstants } from "./constants";
+import { RefreshTokenDto } from "./refresh-token.dto";
 
 @Injectable()
 export class AuthService {
@@ -11,29 +13,50 @@ export class AuthService {
         private userService: UserService,
         private jwtService: JwtService
     ) {}
-
-    async signIn(email: string, password: string): Promise<{access_token: string}> {
-        if (!email) {
-            throw new BadRequestException('이메일을 입력해주세요');
-        }
-
-        if (!password) {
-            throw new BadRequestException('비밀번호를 입력해주세요');
-        }
-
+    
+    async validateUser(email: string, password: string): Promise<any> {
         const user = await this.userService.findOneByEmail(email);
+        if (user && user.password === password) {
+            const { password, ...result } = user;
+            return result;
+        }
+        return null;
+    }
 
+    async generateAccessToken(user: User): Promise<string> {
+        const payload = {
+            sub: user.id,
+            email: user.email,
+        }
+
+        return this.jwtService.signAsync(payload);
+    }
+
+    async generateRefreshToken(user: User): Promise<string> {
+        const payload = {
+            sub: user.id,
+            email: user.email,
+        }
+
+        return this.jwtService.signAsync({sub: payload.sub}, {
+            secret: jwtConstants.refresh_secret,
+            expiresIn: '30d',
+        })
+    }
+
+    async refresh(refreshTokenDto: RefreshTokenDto): Promise<{ accessToken: string}> {
+        const { refresh_token } = refreshTokenDto;
+
+        const decodedRefreshToken = this.jwtService.verify(refresh_token, { secret: jwtConstants.refresh_secret });
+
+        const userId = decodedRefreshToken.id;
+        const user = await this.userService.getUserIfRefreshTokenMatches(refresh_token, userId);
         if (!user) {
-            throw new UnauthorizedException('등록되지 않은 사용자입니다.');
+            throw new UnauthorizedException('Invalid user');
         }
 
-        if (password !== user?.password) {
-            throw new UnauthorizedException('비밀번호가 일치하지 않습니다.');
-        }
+        const accessToken = await this.generateAccessToken(user);
 
-        const payload = {sub: user.id, email: user.email};
-        return {
-            access_token: await this.jwtService.signAsync(payload),
-        };
+        return { accessToken };
     }
 }

@@ -12,15 +12,15 @@ const relative_path = path.join(__dirname, '../../src/images/user_images');
 @Controller('user')
 export class UserController {
     constructor(private readonly userService: UserService) {}
-
+    
     @Post()
     @UseInterceptors(FileInterceptor('image', {
         fileFilter: (req: Request, file, callback: FileFilterCallback) => {
             if (!file.mimetype.match(/image\/(gif|jpeg|png)/)) {
                 return callback(
-                  new UnsupportedMediaTypeException(
-                    'You can upload only gif, jpeg and png files',
-                  ),
+                    new UnsupportedMediaTypeException(
+                        'You can upload only gif, jpeg and png files',
+                    ),
                 );
             }
             callback(null, true);
@@ -38,15 +38,15 @@ export class UserController {
         if (!createUserDto) {
             throw new BadRequestException('User data is missing');
         }
-      
+        
         const filename = image?.filename;
         if (filename) {
-        createUserDto.profile_pic = filename;
+            createUserDto.profile_pic = filename;
         }
         else {
-        throw new BadRequestException('File upload failed');
+            throw new BadRequestException('File upload failed');
         }
-    
+        
         return this.userService.create(createUserDto);
     }
     
