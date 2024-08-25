@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UnsupportedMediaTypeException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UnsupportedMediaTypeException, InternalServerErrorException, BadRequestException, UseGuards, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -6,14 +6,18 @@ import { User } from './entities/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage, FileFilterCallback } from 'multer';
 import * as path from 'path';
+import { JwtAccessAuthGuard } from 'src/auth/jwt-access.guard';
+import { Space } from 'src/space/entities/space.entity';
 
 const relative_path = path.join(__dirname, '../../src/images/user_images');
 
 @Controller('user')
 export class UserController {
-    constructor(private readonly userService: UserService) {}
+    constructor(
+        private readonly userService: UserService,
+    ) {}
     
-    @Post()
+    @Post('signup')
     @UseInterceptors(FileInterceptor('image', {
         fileFilter: (req: Request, file, callback: FileFilterCallback) => {
             if (!file.mimetype.match(/image\/(gif|jpeg|png)/)) {
@@ -40,34 +44,58 @@ export class UserController {
         }
         
         const filename = image?.filename;
+        
         if (filename) {
             createUserDto.profile_pic = filename;
-        }
-        else {
-            throw new BadRequestException('File upload failed');
         }
         
         return this.userService.create(createUserDto);
     }
     
-    @Get()
-    async findAll(): Promise<User[]> {
-        return this.userService.findAll();
-        
-    }
+    // @UseGuards(JwtAccessAuthGuard)
+    // @Get('allUsers')
+    // async findAll(@Req() req: any): Promise<User[]> {
+    //     const allUsers: User[] = await this.userService.findAll();
+    //     allUsers.forEach(function(user) {
+    //         if (user.id !== req.user.id) {
+    //             user.email = undefined;
+    //         }
+    //     });
     
+    //     return allUsers;
+    
+    // }
+    
+    @UseGuards(JwtAccessAuthGuard)
     @Get(':id')
-    async findOne(@Param('id') id: string): Promise<Partial<User>> {
-        return this.userService.findOne(+id);
+    async findOne(@Req() req: any, @Param('id') id: string): Promise<User> {
+        const result: User = await this.userService.findOne(+id);
+        if (req.user.id !== id) {
+            result.email = undefined;
+        }
+        
+        result.currentRefreshToken = undefined;
+        result.currentRefreshTokenExp = undefined;
+        result.id = undefined;
+        
+        return result;
     }
     
+    @UseGuards(JwtAccessAuthGuard)
     @Patch(':id')
     async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
         return this.userService.update(+id, updateUserDto);
     }
     
-    @Delete(':id')
-    async remove(@Param('id') id: string): Promise<void> {
-        return this.userService.remove(+id);
+    // @Delete(':id')
+    // async remove(@Param('id') id: string): Promise<void> {
+    //     return this.userService.remove(+id);
+    // }
+    
+    @UseGuards(JwtAccessAuthGuard)
+    @Get('spaces')
+    async spaces(@Req() req: any): Promise<Space[]> {
+        const userId = req.user.id;
+        return this.userService.getUserSpaces(userId);
     }
 }

@@ -5,12 +5,17 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as ms from 'ms';
+import { Userspace } from 'src/userspace/entities/userspace.entity';
+import { Space } from 'src/space/entities/space.entity';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(User)
         private userRepository: Repository<User>,
+        
+        @InjectRepository(Userspace)
+        private userspaceRepository: Repository<Userspace>,
     ) {}
     
     async create(createUserDto: CreateUserDto): Promise<User> {
@@ -72,5 +77,14 @@ export class UserService {
             currentRefreshToken: null,
             currentRefreshTokenExp: null,
         });
+    }
+    
+    async getUserSpaces(userId: number): Promise<Space[]> {
+        const userSpaces = await this.userspaceRepository.find({
+            where: { userId },
+            relations: ['space'],
+        });
+        
+        return userSpaces.map(userSpace => userSpace.space);
     }
 }

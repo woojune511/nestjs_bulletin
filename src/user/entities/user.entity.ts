@@ -1,7 +1,9 @@
 import { Space } from 'src/space/entities/space.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, PrimaryColumn } from 'typeorm';
+import { Userspace } from 'src/userspace/entities/userspace.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, PrimaryColumn, Unique } from 'typeorm';
 
 @Entity()
+@Unique(["email"])
 export class User {
     @PrimaryGeneratedColumn()
     id: number;
@@ -19,7 +21,7 @@ export class User {
     password: string;
 
     @Column()
-    profile_pic: string;
+    profile_pic: string = 'default.png';
 
     @Column({ nullable: true })
     currentRefreshToken: string;
@@ -27,6 +29,9 @@ export class User {
     @Column({ type: 'datetime', nullable: true })
     currentRefreshTokenExp: Date;
 
-    // @OneToMany(() => Space, (space) => space.owner)
-    // own_spaces: Space[];
+    @OneToMany(() => Space, (space) => space.owner)
+    owning_spaces: Space[];
+
+    @OneToMany(() => (Userspace), (userspace) => (userspace.user))
+    userspaces: Userspace[];
 }

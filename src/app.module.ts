@@ -5,6 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { SpaceModule } from './space/space.module';
 import { AuthModule } from './auth/auth.module';
+import { SpaceroleModule } from './spacerole/spacerole.module';
+import { UserroleModule } from './userrole/userrole.module';
+import { UserspaceModule } from './userspace/userspace.module';
+import { PostModule } from './post/post.module';
 
 @Module({
     imports: [
@@ -20,7 +24,11 @@ import { AuthModule } from './auth/auth.module';
         }),
         UserModule,
         SpaceModule,
-        AuthModule
+        AuthModule,
+        SpaceroleModule,
+        UserroleModule,
+        UserspaceModule,
+        PostModule
     ],
     controllers: [AppController],
     providers: [AppService],

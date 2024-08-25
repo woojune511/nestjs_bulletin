@@ -72,11 +72,11 @@ export class AuthController {
         });
     }
 
-    @Get('authenticate')
-    @UseGuards(JwtAccessAuthGuard)
-    async user(@Req() req: any, @Res() res: Response): Promise<any> {
-      const userId: number = req.user.id;
-      const verifiedUser: User = await this.userService.findOne(userId);
-      return res.send(verifiedUser);
-    }
+    // @Get('authenticate')
+    // @UseGuards(JwtAccessAuthGuard)
+    // async user(@Req() req: any, @Res() res: Response): Promise<any> {
+    //   const userId: number = req.user.id;
+    //   const verifiedUser: User = await this.userService.findOne(userId);
+    //   return res.send(verifiedUser);
+    // }
 }
