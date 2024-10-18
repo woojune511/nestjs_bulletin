@@ -11,6 +11,6 @@ import { MulterModule } from '@nestjs/platform-express';
     ],
     controllers: [UserController],
     providers: [UserService],
-    exports: [UserService],
+    exports: [UserService, TypeOrmModule],
 })
 export class UserModule {}

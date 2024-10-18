@@ -1,16 +1,13 @@
 import { Space } from "src/space/entities/space.entity";
 import { Spacerole } from "src/spacerole/entities/spacerole.entity";
 import { User } from "src/user/entities/user.entity";
-import { Entity, PrimaryColumn, ManyToOne } from "typeorm";
+import { Entity, PrimaryColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Userspace {
-    @PrimaryColumn()
-    userId: number;
-
-    @PrimaryColumn()
-    spaceId: number;
-
+    @PrimaryGeneratedColumn()
+    id: number;
+    
     @ManyToOne(() => (User), (user) => (user.userspaces))
     user: User;
 

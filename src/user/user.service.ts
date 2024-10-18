@@ -14,8 +14,6 @@ export class UserService {
         @InjectRepository(User)
         private userRepository: Repository<User>,
         
-        @InjectRepository(Userspace)
-        private userspaceRepository: Repository<Userspace>,
     ) {}
     
     async create(createUserDto: CreateUserDto): Promise<User> {
@@ -77,14 +75,5 @@ export class UserService {
             currentRefreshToken: null,
             currentRefreshTokenExp: null,
         });
-    }
-    
-    async getUserSpaces(userId: number): Promise<Space[]> {
-        const userSpaces = await this.userspaceRepository.find({
-            where: { userId },
-            relations: ['space'],
-        });
-        
-        return userSpaces.map(userSpace => userSpace.space);
     }
 }

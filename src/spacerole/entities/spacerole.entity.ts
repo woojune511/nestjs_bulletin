@@ -1,13 +1,13 @@
 import { Space } from "src/space/entities/space.entity";
 import { User } from "src/user/entities/user.entity";
 import { Userspace } from "src/userspace/entities/userspace.entity";
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Spacerole {
     @PrimaryGeneratedColumn()
     id: number;
-
+    
     @Column({
         nullable: false
     })

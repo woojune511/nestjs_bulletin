@@ -28,14 +28,14 @@ export class AuthController {
         const refresh_token = await this.authService.generateRefreshToken(user);
         
         await this.userService.setCurrentRefreshToken(refresh_token, user.id);
-
+        
         res.cookie('access_token', access_token, {
-          httpOnly: true,
+            httpOnly: true,
         });
         res.cookie('refresh_token', refresh_token, {
-          httpOnly: true,
+            httpOnly: true,
         });
-
+        
         return {
             message: 'login success',
             access_token: access_token,
@@ -71,7 +71,7 @@ export class AuthController {
             message: 'logout success'
         });
     }
-
+    
     // @Get('authenticate')
     // @UseGuards(JwtAccessAuthGuard)
     // async user(@Req() req: any, @Res() res: Response): Promise<any> {

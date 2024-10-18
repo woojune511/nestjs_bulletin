@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'ty
 import { User } from 'src/user/entities/user.entity';
 import { Spacerole } from 'src/spacerole/entities/spacerole.entity';
 import { Userspace } from 'src/userspace/entities/userspace.entity';
+import { Post } from 'src/post/entities/post.entity';
 
 @Entity()
 export class Space {
@@ -22,4 +23,13 @@ export class Space {
 
     @OneToMany(() => (Userspace), (userspace) => (userspace.user))
     userspaces: Userspace[];
+
+    @OneToMany(() => Post, (post) => (post.space))
+    posts: Post[];
+
+    @Column()
+    code_admin: String;
+
+    @Column()
+    code_member: String;
 }

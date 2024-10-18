@@ -34,8 +34,8 @@ export class UserspaceService {
 
         const userspace: Userspace = await this.userspaceRepository.findOne({
             where: {
-                spaceId: spaceId,
-                userId: ownerId,
+                user: owner,
+                space: space,
             }
         });
 
@@ -50,8 +50,8 @@ export class UserspaceService {
         const user_to_change: User = await this.userRepository.findOne({ where: { id: userId } });
         const userspace_to_change: Userspace = await this.userspaceRepository.findOne({
             where: {
-                spaceId: spaceId,
-                userId: userId,
+                space: space,
+                user: user_to_change,
             }
         });
 
@@ -88,8 +88,8 @@ export class UserspaceService {
 
         const userspace: Userspace = await this.userspaceRepository.findOne({
             where: {
-                spaceId: spaceId,
-                userId: ownerId,
+                space: space,
+                user: owner,
             }
         });
 
@@ -113,23 +113,18 @@ export class UserspaceService {
         }
     }
 
-    // create(createUserspaceDto: CreateUserspaceDto) {
-    //     return 'This action adds a new userspace';
-    // }
-    
-    // findAll() {
-    //     return `This action returns all userspace`;
-    // }
-    
-    // findOne(id: number) {
-    //     return `This action returns a #${id} userspace`;
-    // }
-    
-    // update(id: number, updateUserspaceDto: UpdateUserspaceDto) {
-    //     return `This action updates a #${id} userspace`;
-    // }
-    
-    // remove(id: number) {
-    //     return `This action removes a #${id} userspace`;
-    // }
+    async getUserspaces(userId: number): Promise<Space[]> {
+        const user: User = await this.userRepository.findOne({where: {id: userId}});
+
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        const userSpaces = await this.userspaceRepository.find({
+            where: { user: user },
+            relations: ['space'],
+        });
+        
+        return userSpaces.map(userSpace => userSpace.space);
+    }
 }

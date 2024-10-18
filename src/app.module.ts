@@ -6,9 +6,9 @@ import { UserModule } from './user/user.module';
 import { SpaceModule } from './space/space.module';
 import { AuthModule } from './auth/auth.module';
 import { SpaceroleModule } from './spacerole/spacerole.module';
-import { UserroleModule } from './userrole/userrole.module';
 import { UserspaceModule } from './userspace/userspace.module';
 import { PostModule } from './post/post.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
     imports: [
@@ -26,9 +26,9 @@ import { PostModule } from './post/post.module';
         SpaceModule,
         AuthModule,
         SpaceroleModule,
-        UserroleModule,
         UserspaceModule,
-        PostModule
+        PostModule,
+        ChatModule
     ],
     controllers: [AppController],
     providers: [AppService],

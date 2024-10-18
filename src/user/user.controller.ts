@@ -7,7 +7,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage, FileFilterCallback } from 'multer';
 import * as path from 'path';
 import { JwtAccessAuthGuard } from 'src/auth/jwt-access.guard';
-import { Space } from 'src/space/entities/space.entity';
+import { PostService } from 'src/post/post.service';
+
 
 const relative_path = path.join(__dirname, '../../src/images/user_images');
 
@@ -52,20 +53,6 @@ export class UserController {
         return this.userService.create(createUserDto);
     }
     
-    // @UseGuards(JwtAccessAuthGuard)
-    // @Get('allUsers')
-    // async findAll(@Req() req: any): Promise<User[]> {
-    //     const allUsers: User[] = await this.userService.findAll();
-    //     allUsers.forEach(function(user) {
-    //         if (user.id !== req.user.id) {
-    //             user.email = undefined;
-    //         }
-    //     });
-    
-    //     return allUsers;
-    
-    // }
-    
     @UseGuards(JwtAccessAuthGuard)
     @Get(':id')
     async findOne(@Req() req: any, @Param('id') id: string): Promise<User> {
@@ -85,17 +72,5 @@ export class UserController {
     @Patch(':id')
     async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
         return this.userService.update(+id, updateUserDto);
-    }
-    
-    // @Delete(':id')
-    // async remove(@Param('id') id: string): Promise<void> {
-    //     return this.userService.remove(+id);
-    // }
-    
-    @UseGuards(JwtAccessAuthGuard)
-    @Get('spaces')
-    async spaces(@Req() req: any): Promise<Space[]> {
-        const userId = req.user.id;
-        return this.userService.getUserSpaces(userId);
     }
 }

@@ -1,3 +1,5 @@
+import { Chat } from 'src/chat/entities/chat.entity';
+import { Post } from 'src/post/entities/post.entity';
 import { Space } from 'src/space/entities/space.entity';
 import { Userspace } from 'src/userspace/entities/userspace.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, PrimaryColumn, Unique } from 'typeorm';
@@ -32,6 +34,12 @@ export class User {
     @OneToMany(() => Space, (space) => space.owner)
     owning_spaces: Space[];
 
-    @OneToMany(() => (Userspace), (userspace) => (userspace.user))
+    @OneToMany(() => Userspace, (userspace) => (userspace.user))
     userspaces: Userspace[];
+
+    @OneToMany(() => Post, (post) => (post.writer))
+    posts: Post[];
+
+    @OneToMany(() => Chat, (chat) => (chat.writer))
+    chats: Chat[];
 }
