@@ -12,6 +12,7 @@ import { Spacerole } from 'src/spacerole/entities/spacerole.entity';
 import { SpaceroleService } from 'src/spacerole/spacerole.service';
 import { randomBytes } from 'crypto';
 import { Post } from 'src/post/entities/post.entity';
+import { Chat } from 'src/chat/entities/chat.entity';
 
 @Injectable()
 export class SpaceService {
@@ -43,6 +44,8 @@ export class SpaceService {
         let space = this.spaceRepository.create({
             ...createSpaceDto,
             owner: user,
+            code_admin: this.generateRandomString(8),
+            code_member: this.generateRandomString(8),
         });
         
         space = await this.spaceRepository.save(space);
@@ -60,9 +63,6 @@ export class SpaceService {
             space: space,
             spacerole: spacerole,
         });
-                
-        space.code_admin = this.generateRandomString(8);
-        space.code_member = this.generateRandomString(8);
 
         await this.userspaceRepository.save(userspace);
         
@@ -72,13 +72,13 @@ export class SpaceService {
     async handover(spaceId: number, newOwnerId: number, currentOwnerId: number): Promise<Space> {
         const space = await this.spaceRepository.findOne({
             where: { id: spaceId },
-            relations: ['owner', 'userSpaces'],
+            relations: ['owner', 'userspaces'],
         });
         
         if (!space) {
             throw new NotFoundException('Space not found');
         }
-        
+
         if (space.owner.id !== currentOwnerId) {
             throw new ForbiddenException('You are not the owner of this space');
         }
@@ -92,12 +92,30 @@ export class SpaceService {
         if (!newOwner) {
             throw new NotFoundException('New owner not found');
         }
+
+        if (newOwnerId == space.owner.id) {
+            return space;
+        }
         
         space.owner = newOwner;
         await this.spaceRepository.save(space);
+
+        const newOwnerUserSpace = await this.userspaceRepository.findOne({
+            where: {
+                space: space,
+                user: newOwner,
+            }
+        })
+
+        if (!newOwner) {
+            throw new BadRequestException('The user you want to hand over the space to is not a member of the space');
+        }
         
-        const userSpaces = await this.userspaceRepository.find({ where: { space: space } });
-        
+        const userSpaces = await this.userspaceRepository.find({
+            where: { space: space },
+            relations: ['user', 'spacerole']
+        });
+
         for (const userSpace of userSpaces) {
             if (userSpace.user.id === currentOwnerId) {
                 let memberRole = await this.spaceroleService.findOrCreateRole(spaceId, 'member', false);
@@ -133,6 +151,11 @@ export class SpaceService {
             is_admin = false;
         }
 
+        let userspace: Userspace = await this.userspaceRepository.findOne({where: {user: user, space: space}});
+        if (userspace) {
+            throw new BadRequestException('You are already member of the space');
+        }
+
         let newRole: Spacerole;
         if (is_admin) {
             newRole = await this.spaceroleService.findOrCreateRole(space.id, 'admin', true);
@@ -140,30 +163,42 @@ export class SpaceService {
             newRole = await this.spaceroleService.findOrCreateRole(space.id, 'member', false);
         }
 
-        let userspace: Userspace = await this.userspaceRepository.create({
+        let newuserspace: Userspace = await this.userspaceRepository.create({
             user: user,
             space: space,
             spacerole: newRole,
         })
 
-        return await this.userspaceRepository.save(userspace);
+        return await this.userspaceRepository.save(newuserspace);
     }
 
-    async trending(spaceId: number): Promise<Post[]> {
-        const space: Space = await this.spaceRepository.findOne({where: {id: spaceId}});
-        if (!space) {
-            throw new BadRequestException('Space not found');
+    async trending(userId: number, spaceId: number): Promise<Post[]> {
+        const user: User = await this.userRepository.findOne({where: {id: userId}});
+        if (!user) {
+            throw new NotFoundException('User not found');
         }
 
-        const posts: Post[] = await this.postRepository.find({where: {space: space}, relations: ['chats']});
+        const space: Space = await this.spaceRepository.findOne({where: {id: spaceId}});
+        if (!space) {
+            throw new NotFoundException('Space not found');
+        }
+
+        const userspace: Userspace = await this.userspaceRepository.findOne({where: {user: user, space: space}});
+        if (!userspace) {
+            throw new BadRequestException('You are not a member of the space');
+        }
+
+        let posts: Post[] = await this.postRepository.find({where: {space: space}, relations: ['writer', 'chats', 'chats.writer']});
 
         posts.sort((a, b) => {
-            let a_chat_cnt: number = a.chats.length;
-            let b_chat_cnt: number = b.chats.length;
+            let a_chats_except_writers: Chat[] = a.chats.filter(element => element.writer.id !== a.writer.id);
+            let b_chats_except_writers: Chat[] = b.chats.filter(element => element.writer.id !== b.writer.id);
+            let a_chat_cnt: number = a_chats_except_writers.length;
+            let b_chat_cnt: number = b_chats_except_writers.length;
 
             if (a_chat_cnt == b_chat_cnt) {
-                let a_chat_users = new Set(a.chats.map(chat => chat.writer.id));
-                let b_chat_users = new Set(b.chats.map(chat => chat.writer.id));
+                let a_chat_users = new Set(a_chats_except_writers.map(chat => chat.writer.id));
+                let b_chat_users = new Set(b_chats_except_writers.map(chat => chat.writer.id));
 
                 return b_chat_users.size - a_chat_users.size;
 
@@ -172,6 +207,11 @@ export class SpaceService {
             }
         });
         
-        return posts.slice(0, 5);
+        posts = posts.slice(0, 5);
+        posts.forEach((p) => {
+            delete p.writer;
+            delete p.chats;
+        })
+        return posts;
     }
 }

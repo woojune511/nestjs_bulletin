@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UnsupportedMediaTypeException, InternalServerErrorException, BadRequestException, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UnsupportedMediaTypeException, InternalServerErrorException, BadRequestException, UseGuards, Req, NotFoundException, Res } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -7,7 +7,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage, FileFilterCallback } from 'multer';
 import * as path from 'path';
 import { JwtAccessAuthGuard } from 'src/auth/jwt-access.guard';
-import { PostService } from 'src/post/post.service';
+// import * as fs from 'fs';
+import { instanceToPlain } from 'class-transformer';
 
 
 const relative_path = path.join(__dirname, '../../src/images/user_images');
@@ -39,7 +40,7 @@ export class UserController {
             },
         }),
     }))
-    async create(@Body() createUserDto: CreateUserDto, @UploadedFile() image: Express.Multer.File): Promise<User> {
+    async create(@Body() createUserDto: CreateUserDto, @UploadedFile() image: Express.Multer.File): Promise<Object> {
         if (!createUserDto) {
             throw new BadRequestException('User data is missing');
         }
@@ -50,27 +51,32 @@ export class UserController {
             createUserDto.profile_pic = filename;
         }
         
-        return this.userService.create(createUserDto);
+        const user: User = await this.userService.create(createUserDto);
+        const result = instanceToPlain(user);
+        return result;
     }
     
     @UseGuards(JwtAccessAuthGuard)
     @Get(':id')
-    async findOne(@Req() req: any, @Param('id') id: string): Promise<User> {
-        const result: User = await this.userService.findOne(+id);
-        if (req.user.id !== id) {
-            result.email = undefined;
+    async findOne(@Req() req: any, @Param('id') id: number): Promise<Object> {
+        const user: User = await this.userService.findOne(id);
+        if (!user) {
+            throw new NotFoundException('User not found');
         }
         
-        result.currentRefreshToken = undefined;
-        result.currentRefreshTokenExp = undefined;
-        result.id = undefined;
+        var result = instanceToPlain(user);
+        if (req.user.id !== id) {
+            delete result.email;
+        }
         
         return result;
     }
     
     @UseGuards(JwtAccessAuthGuard)
     @Patch(':id')
-    async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
-        return this.userService.update(+id, updateUserDto);
+    async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<Object> {
+        const user: User = await this.userService.update(+id, updateUserDto);
+        var result = instanceToPlain(user);
+        return result;
     }
 }

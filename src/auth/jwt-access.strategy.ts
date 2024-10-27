@@ -5,17 +5,21 @@ import { jwtConstants } from './constants';
 import { UserService } from 'src/user/user.service';
 import { Request } from 'express';
 
+const cookieExtractor = (req: Request) => {
+    let token = null;
+    if (req && req.cookies) {
+        token = req.cookies['access_token'];
+    }
+    return token;
+};
+
 @Injectable()
 export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access-token') {
     constructor(
         private readonly userService: UserService,
     ) {
         super({
-            jwtFromRequest: ExtractJwt.fromExtractors([
-                (request) => {
-                    return request?.cookies?.access_token;
-                },
-            ]),
+            jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
             secretOrKey: jwtConstants.access_secret,
             ignoreExpiration: false
         });

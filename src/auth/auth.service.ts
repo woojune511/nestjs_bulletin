@@ -44,12 +44,9 @@ export class AuthService {
         })
     }
     
-    async refresh(refreshTokenDto: RefreshTokenDto): Promise<{ accessToken: string}> {
-        const { refresh_token } = refreshTokenDto;
-        
+    async refresh(refresh_token: string): Promise<{ accessToken: string}> {        
         const decodedRefreshToken = this.jwtService.verify(refresh_token, { secret: jwtConstants.refresh_secret });
-        
-        const userId = decodedRefreshToken.id;
+        const userId = decodedRefreshToken.sub;
         const user = await this.userService.getUserIfRefreshTokenMatches(refresh_token, userId);
         if (!user) {
             throw new UnauthorizedException('Invalid user');

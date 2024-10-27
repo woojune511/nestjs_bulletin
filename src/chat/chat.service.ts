@@ -8,6 +8,7 @@ import { Space } from 'src/space/entities/space.entity';
 import { Userspace } from 'src/userspace/entities/userspace.entity';
 import { Post } from 'src/post/entities/post.entity';
 import { Chat } from './entities/chat.entity';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class ChatService {
@@ -27,13 +28,11 @@ export class ChatService {
         if (!user) {
             throw new BadRequestException('User not found');
         }
-
-        const post: Post = await this.postRepository.findOne({where: {id: postId}});
+        const post: Post = await this.postRepository.findOne({where: {id: postId}, relations: ['space']});
 
         if (!post) {
             throw new BadRequestException('Post not found');
         }
-
         const space: Space = post.space;
         const userspace: Userspace = await this.userspaceRepository.findOne({where: {
             user: user,
@@ -41,14 +40,13 @@ export class ChatService {
         }});
         
         if (createChatDto.is_anonymous && !userspace) {
-            throw new UnauthorizedException('Only members of the space can post an anonymous chat');
+            throw new UnauthorizedException('Only member of the space can post an anonymous chat');
         }
 
         const chat: Chat = await this.chatRepository.create(createChatDto);
         chat.post = post;
         chat.writer = user;
-
-        if (!chatId) {
+        if (chatId) {
             const parentChat: Chat = await this.chatRepository.findOne({where: {id: chatId}});
             if (!parentChat) {
                 throw new BadRequestException('Parent chat not found');
@@ -58,7 +56,16 @@ export class ChatService {
 
         await this.chatRepository.save(chat);
 
-        return chat;
+        var result = instanceToPlain(chat);
+        result.post.space = {
+            "id": result.post.space.id,
+            "logo": result.post.space.logo,
+            "name": result.post.space.name
+        };
+
+        delete result.writer;
+
+        return result;
     }
     
     async findAll(userId: number): Promise<Chat[]> {
@@ -76,17 +83,17 @@ export class ChatService {
             throw new BadRequestException('User not found');
         }
 
-        const chat: Chat = await this.chatRepository.findOne({where: {id: chatId}, relations: ['post']});
+        const chat: Chat = await this.chatRepository.findOne({where: {id: chatId}, relations: ['writer', 'post', 'post.space', 'post.space.owner']});
         if (!chat) {
             throw new BadRequestException('Chat not found');
         }
 
         const space: Space = chat.post.space;
-        if ((chat.writer != user) && (space.owner != user)) {
+
+        if ((chat.writer.id != user.id) && (space.owner.id != user.id)) {
             throw new UnauthorizedException('Only the owner of the space and the writer of the chat can delete the chat');
         }
 
         await this.chatRepository.delete(chat);
-
     }
 }

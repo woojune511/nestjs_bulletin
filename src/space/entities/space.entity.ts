@@ -3,6 +3,7 @@ import { User } from 'src/user/entities/user.entity';
 import { Spacerole } from 'src/spacerole/entities/spacerole.entity';
 import { Userspace } from 'src/userspace/entities/userspace.entity';
 import { Post } from 'src/post/entities/post.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Space {
@@ -12,7 +13,7 @@ export class Space {
     @ManyToOne(() => User, (owner) => (owner.owning_spaces))
     owner: User;
 
-    @OneToMany(() => Spacerole, (spacerole) => (spacerole.space))
+    @OneToMany(() => Spacerole, (spacerole) => (spacerole.space), {cascade: true})
     spaceroles: Spacerole[];
 
     @Column()
@@ -21,10 +22,10 @@ export class Space {
     @Column()
     logo: string = 'default_space.png';
 
-    @OneToMany(() => (Userspace), (userspace) => (userspace.user))
+    @OneToMany(() => (Userspace), (userspace) => (userspace.user), {cascade: true})
     userspaces: Userspace[];
 
-    @OneToMany(() => Post, (post) => (post.space))
+    @OneToMany(() => Post, (post) => (post.space), {cascade: true})
     posts: Post[];
 
     @Column()

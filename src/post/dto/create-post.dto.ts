@@ -13,10 +13,10 @@ export class CreatePostDto {
     @IsNotEmpty()
     content: String;
 
-    @IsString()
-    file: String;
+    // @IsString()
+    // file: String;
 
-    @IsNumber()
-    @IsNotEmpty()
-    spaceId: number;
+    // @IsNumber()
+    // @IsNotEmpty()
+    // spaceId: number;
 }

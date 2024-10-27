@@ -11,7 +11,7 @@ export class Post {
     @ManyToOne(() => Space, (space) => (space.posts))
     space: Space;
 
-    @OneToMany(() => User, (user) => (user.posts))
+    @ManyToOne(() => User, (user) => (user.posts))
     writer: User;
 
     @Column()
@@ -23,9 +23,9 @@ export class Post {
     @Column()
     content: String;
 
-    @Column()
-    file: String;
+    // @Column()
+    // file: String;
 
-    @OneToMany(() => Chat, (chat) => (chat.post))
+    @OneToMany(() => Chat, (chat) => (chat.post), {cascade: true})
     chats: Chat[];
 }

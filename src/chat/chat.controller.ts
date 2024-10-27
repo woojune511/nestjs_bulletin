@@ -23,16 +23,18 @@ export class ChatController {
     async remove(@Req() req: any, @Param('id') chatId: number) {
         const userId: number = req.user.id;
         await this.chatService.remove(userId, chatId);
+
+        return {"message": "Deleted chat successfully"};
     }
 
     @UseGuards(JwtAccessAuthGuard)
-    @Post(':postId/chat/:chatId?')
-    async newChat(@Req() req: any,  @Body() createChatDto: CreateChatDto, @Param('postId') postId: number, @Param('chatId') chatId?: number): Promise<Chat> {
+    @Post(':postId/:chatId?')
+    async newChat(@Req() req: any, @Body() createChatDto: CreateChatDto, @Param('postId') postId: number, @Param('chatId') chatId?: number): Promise<Object> {
         const userId: number = req.user.id;
         if (chatId) {
             return this.chatService.create(createChatDto, userId, postId);
         } else {
-        return this.chatService.create(createChatDto, userId, postId, chatId);
+            return this.chatService.create(createChatDto, userId, postId, chatId);
         }
     }
 }

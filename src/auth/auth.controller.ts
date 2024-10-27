@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, Request, Res, UnauthorizedException, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Headers, Post, Req, Request, Res, UnauthorizedException, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { LocalAuthGuard } from "./local-auth.guard";
 import { UserService } from "src/user/user.service";
@@ -43,13 +43,17 @@ export class AuthController {
         };
     }
     
-    @Post('refresh')
+    @Get('refresh')
+    @UseGuards(JwtRefreshGuard)
     async refresh (
-        @Body() refreshTokenDto: RefreshTokenDto,
+        // @Headers('authorization') authorizationHeader: string,
+        @Req() req: any,
         @Res({ passthrough: true}) res: Response,
     ) {
         try {
-            const newAccessToken = (await this.authService.refresh(refreshTokenDto)).accessToken;
+            let refresh_token = req.cookies['refresh_token'];
+            // let refresh_token: string = authorizationHeader.split(' ')[1];
+            const newAccessToken = (await this.authService.refresh(refresh_token)).accessToken;
             
             res.setHeader('Authorization', 'Bearer ' + newAccessToken);
             res.cookie('access_token', newAccessToken, {
@@ -61,8 +65,29 @@ export class AuthController {
         }
     }
     
-    @Post('logout')
-    @UseGuards(JwtRefreshGuard)
+    // @Get('refresh')
+    // @UseGuards(JwtRefreshGuard)
+    // async refresh (
+    //     @Headers('authorization') authorizationHeader: string,
+    //     @Body() refreshTokenDto: RefreshTokenDto,
+    //     @Res({ passthrough: true}) res: Response,
+    // ) {
+    //     try {
+    //         console.log("authorization header: " + authorizationHeader);
+    //         const newAccessToken = (await this.authService.refresh(refreshTokenDto)).accessToken;
+            
+    //         res.setHeader('Authorization', 'Bearer ' + newAccessToken);
+    //         res.cookie('access_token', newAccessToken, {
+    //             httpOnly: true,
+    //         });
+    //         res.send({newAccessToken});
+    //     } catch (err) {
+    //         throw new UnauthorizedException('Invalid refresh token');
+    //     }
+    // }
+    
+    @Get('logout')
+    @UseGuards(JwtAccessAuthGuard)
     async logout(@Req() req: any, @Res() res: Response): Promise<any> {
         await this.userService.removeRefreshToken(req.user.id);
         res.clearCookie('access_token');
