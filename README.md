@@ -41,7 +41,7 @@ Node.js, Nest.js, TypeORM, TypeScript, MySQL
 
 
 ## ER diagram
-![ER diagram] (./ERdiagram.png)
+![ER diagram](ERdiagram.png)
 
 ## API Specification
 #### /auth
